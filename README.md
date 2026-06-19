@@ -179,7 +179,7 @@ the model names (`BOARDROOM_FAST_MODEL`, `BOARDROOM_DEEP_MODEL`).
 ## Project layout
 
 ```
-src/boardroom/
+src/boardroom/       the engine (installable package)
   config.py          settings and strategy weights
   data/
     market.py        Yahoo Finance access and caching
@@ -187,16 +187,32 @@ src/boardroom/
   llm/
     schema.py        structured outputs (the JSON contract)
     client.py        provider abstraction (live and offline)
-    mock.py          offline reasoning engine
+    offline.py       offline reasoning engine
   agents/
     firm.py          functional task-agents
     investors.py     investor personas
-  boardroom.py       orchestration
+  engine.py          orchestration
+  runner.py          assemble a client and run a debate
   cli.py             terminal interface
   mcp_server.py      MCP tool
-evals/               scenarios, checks, and report
-tests/               unit and integration tests
+tests/               unit and integration tests (offline)
+evals/               scenarios, checks, and report (offline)
+server/              Django API (GET /api/debate/<ticker>)
+frontend/            Vite + React + TypeScript single page
 ```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together.
+
+## Development
+
+```bash
+make install     # venv + install with all extras
+make check       # ruff lint, mypy types, and pytest
+make format      # ruff format and autofix
+```
+
+Continuous integration (`.github/workflows/ci.yml`) runs the same lint, type,
+test, and frontend-build checks on every push and pull request.
 
 ## Roadmap
 
