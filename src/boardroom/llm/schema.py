@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 Stance = Literal["bullish", "neutral", "bearish"]
 Verdict = Literal["BUY", "HOLD", "SELL"]
 PositionSize = Literal["none", "small", "medium", "full"]
+RiskLean = Literal["aggressive", "neutral", "conservative"]
 
 
 class FundamentalRead(BaseModel):
@@ -63,9 +64,35 @@ class InvestorVerdict(BaseModel):
     )
 
 
-class RiskReview(BaseModel):
-    """The Risk Manager's check on the debate before the final call."""
+class TraderPlan(BaseModel):
+    """The Trader's proposed transaction, composed from the brief and the debate.
 
+    The Trader turns the discussion into a concrete proposal (direction, sizing,
+    horizon) that the risk team then stress-tests and the Portfolio Manager
+    finally approves or overrules.
+    """
+
+    action: Verdict
+    conviction: float = Field(ge=0.0, le=1.0)
+    thesis: str = Field(description="Why this is the trade, in the Trader's voice.")
+    time_horizon: str = Field(description="Intended holding period, e.g. 'swing' or 'long-term'.")
+
+
+class RiskPerspective(BaseModel):
+    """One stance from the risk team (aggressive, neutral, or conservative)."""
+
+    stance: RiskLean
+    suggested_position_size: PositionSize
+    argument: str = Field(description="How this risk posture reads the trade.")
+
+
+class RiskReview(BaseModel):
+    """The risk team's check on the proposed trade before the final call.
+
+    Holds the three risk perspectives and the lead's synthesis of them.
+    """
+
+    perspectives: list[RiskPerspective] = Field(default_factory=list)
     key_risks: list[str] = Field(default_factory=list)
     suggested_position_size: PositionSize = "small"
     confidence_adjustment: str = Field(
@@ -92,6 +119,7 @@ class BoardroomResult(BaseModel):
     as_of: str | None = None
     brief: ResearchBrief
     debate: list[InvestorVerdict]
+    trader: TraderPlan
     risk: RiskReview
     verdict: FinalVerdict
 

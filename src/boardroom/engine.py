@@ -32,8 +32,10 @@ from boardroom.llm.schema import (
     FundamentalRead,
     InvestorVerdict,
     ResearchBrief,
+    RiskPerspective,
     RiskReview,
     TechnicalRead,
+    TraderPlan,
 )
 
 
@@ -160,32 +162,66 @@ class BoardRoom:
             )
         return verdicts
 
-    async def _risk(self, brief: ResearchBrief, debate: list[InvestorVerdict]) -> RiskReview:
+    def _debate_digest(self, debate: list[InvestorVerdict]) -> list[dict]:
+        return [
+            {"investor": v.investor, "stance": v.stance, "conviction": v.conviction} for v in debate
+        ]
+
+    async def _trade(self, brief: ResearchBrief, debate: list[InvestorVerdict]) -> TraderPlan:
         ctx = {
             "ticker": brief.ticker,
-            "technicals": {"score": brief.technicals.score},
+            "technicals": {"score": brief.technicals.score, "label": brief.technicals.stance},
             "fundamentals_stance": brief.fundamentals.stance,
+            "debate": self._debate_digest(debate),
             "indicators": brief.indicator_snapshot,
-            "debate": [
-                {"investor": v.investor, "stance": v.stance, "conviction": v.conviction}
-                for v in debate
-            ],
         }
         return await self._ask(
-            firm.RISK_MANAGER, "Review the debate and assess risk.", ctx, RiskReview
+            firm.TRADER, "Compose the debate into a concrete trade proposal.", ctx, TraderPlan
         )
 
+    async def _risk(
+        self, brief: ResearchBrief, debate: list[InvestorVerdict], trader: TraderPlan
+    ) -> RiskReview:
+        # The three risk voices stress-test the Trader's proposal in parallel.
+        base_ctx = {
+            "ticker": brief.ticker,
+            "technicals": {"score": brief.technicals.score},
+            "indicators": brief.indicator_snapshot,
+            "trade": {"action": trader.action, "conviction": trader.conviction},
+            "debate": self._debate_digest(debate),
+        }
+        voices = await asyncio.gather(
+            *(
+                self._ask(agent, "Give your risk posture on this trade.", base_ctx, RiskPerspective)
+                for agent in firm.RISK_TEAM
+            )
+        )
+
+        # The head of risk synthesises the three voices into one review.
+        synth_ctx = dict(base_ctx)
+        synth_ctx["perspectives"] = [
+            {"stance": p.stance, "size": p.suggested_position_size, "argument": p.argument}
+            for p in voices
+        ]
+        review = await self._ask(
+            firm.RISK_MANAGER, "Synthesise the risk team into one review.", synth_ctx, RiskReview
+        )
+        review.perspectives = list(voices)
+        return review
+
     async def _decide(
-        self, brief: ResearchBrief, debate: list[InvestorVerdict], risk: RiskReview
+        self,
+        brief: ResearchBrief,
+        debate: list[InvestorVerdict],
+        trader: TraderPlan,
+        risk: RiskReview,
     ) -> FinalVerdict:
         ctx = {
             "ticker": brief.ticker,
             "technicals": {"score": brief.technicals.score},
             "fundamentals_stance": brief.fundamentals.stance,
-            "debate": [
-                {"investor": v.investor, "stance": v.stance, "conviction": v.conviction}
-                for v in debate
-            ],
+            "debate": self._debate_digest(debate),
+            "trade": {"action": trader.action, "conviction": trader.conviction},
             "risk": {"size": risk.suggested_position_size, "summary": risk.summary},
             "dissent": _dissent_hint(debate),
         }
@@ -200,14 +236,16 @@ class BoardRoom:
         )
         brief = await self._research(market, signals)
         debate = await self._debate(brief)
-        risk = await self._risk(brief, debate)
-        verdict = await self._decide(brief, debate, risk)
+        trader = await self._trade(brief, debate)
+        risk = await self._risk(brief, debate, trader)
+        verdict = await self._decide(brief, debate, trader, risk)
         return BoardroomResult(
             ticker=market.ticker,
             company_name=market.company_name,
             as_of=as_of,
             brief=brief,
             debate=debate,
+            trader=trader,
             risk=risk,
             verdict=verdict,
         )

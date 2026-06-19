@@ -22,8 +22,10 @@ from boardroom.llm.schema import (
     FundamentalRead,
     InvestorVerdict,
     ResearchBrief,
+    RiskPerspective,
     RiskReview,
     TechnicalRead,
+    TraderPlan,
 )
 
 CONTEXT_MARKER = "CONTEXT_JSON:"
@@ -83,6 +85,10 @@ def offline_responder(system: str, prompt: str, schema: type[BaseModel], model: 
         return _technical(ctx)
     if schema is InvestorVerdict:
         return _investor(ctx, _detect_investor(system, prompt))
+    if schema is TraderPlan:
+        return _trader(ctx)
+    if schema is RiskPerspective:
+        return _risk_perspective(ctx, system)
     if schema is RiskReview:
         return _risk(ctx)
     if schema is FinalVerdict:
@@ -213,6 +219,43 @@ def _investor(ctx: dict, name: str) -> dict:
         "thesis": thesis,
         "key_points": [f"Weighing {style['focus']}.", f"Net read is {stance}."],
         "rebuttal": rebuttal,
+    }
+
+
+def _trader(ctx: dict) -> dict:
+    score = _base_market_score(ctx)
+    if score >= 0.2:
+        action, horizon = "BUY", "long-term"
+    elif score <= -0.2:
+        action, horizon = "SELL", "swing (weeks)"
+    else:
+        action, horizon = "HOLD", "watch and revisit"
+    conviction = min(1.0, 0.45 + abs(score) / 2.0)
+    return {
+        "action": action,
+        "conviction": round(conviction, 3),
+        "thesis": f"Composing the brief and the debate, the balance of evidence points to {action}.",
+        "time_horizon": horizon,
+    }
+
+
+def _risk_perspective(ctx: dict, system: str) -> dict:
+    lean = next((voice for voice in ("aggressive", "conservative") if voice in system), "neutral")
+    score = abs(_base_market_score(ctx))
+    sizes = {
+        "aggressive": "full" if score > 0.3 else "medium",
+        "neutral": "medium" if score > 0.4 else "small",
+        "conservative": "small" if score > 0.5 else "none",
+    }
+    arguments = {
+        "aggressive": "The setup is asymmetric enough to size up despite the volatility.",
+        "neutral": "On balance the reward justifies a measured position, nothing more.",
+        "conservative": "Capital preservation comes first here; keep the exposure light.",
+    }
+    return {
+        "stance": lean,
+        "suggested_position_size": sizes[lean],
+        "argument": arguments[lean],
     }
 
 
