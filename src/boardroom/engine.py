@@ -54,6 +54,13 @@ class BoardRoom:
         self._client = client
         self._settings = settings or get_settings()
 
+    @property
+    def client(self) -> LLMClient:
+        """The language-model client. Exposed so callers can read ``client.usage``
+        (tokens, cost, retries, latency) after a run."""
+
+        return self._client
+
     def _model_for(self, agent: Agent) -> str:
         return self._settings.deep_model if agent.tier == "deep" else self._settings.fast_model
 
