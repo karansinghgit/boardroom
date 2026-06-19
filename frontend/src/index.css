@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+/*
+  Editorial, research-note aesthetic: warm paper, ink text, serif display
+  headlines (Fraunces), clean sans body (Inter), restrained accent colors used
+  only to signal stance and verdict.
+*/
+@theme {
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #fbfaf7;
+  --color-paper-raised: #ffffff;
+  --color-panel: #f4f1ea;
+  --color-ink: #1c1a17;
+  --color-ink-soft: #56514a;
+  --color-ink-faint: #8b857a;
+  --color-line: #e6e0d4;
+  --color-line-strong: #d8d1c2;
+
+  --color-bull: #2f7d5b;
+  --color-bull-soft: #eaf3ee;
+  --color-bear: #b23a33;
+  --color-bear-soft: #f7eceb;
+  --color-flat: #9a7b2e;
+  --color-flat-soft: #f5efe1;
+
+  --color-accent: #1c1a17;
+
+  --radius-card: 18px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Subtle paper grain via layered gradients, kept very faint. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(154, 123, 46, 0.05), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(47, 125, 91, 0.045), transparent 55%);
+  }
+  ::selection {
+    background: rgba(28, 26, 23, 0.12);
+  }
+}
+
+/* A thin fading rule used under section labels. */
+.rule {
+  height: 1px;
+  background: linear-gradient(to right, var(--color-line-strong), transparent);
+}
