@@ -39,7 +39,7 @@ async def debate_ticker(ticker: str, rounds: int = 1) -> dict:
         SELL verdict with confidence.
     """
 
-    result, _ = await run_debate_async(ticker, rounds=rounds)
+    result, _, _ = await run_debate_async(ticker, rounds=rounds)
     return result.model_dump()
 
 

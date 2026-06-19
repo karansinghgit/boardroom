@@ -10,7 +10,9 @@ command works on a fresh clone without any setup.
 
 from __future__ import annotations
 
+import logging
 import sys
+import time
 
 import typer
 from rich.console import Console
@@ -19,6 +21,7 @@ from rich.table import Table
 from rich.text import Text
 
 from boardroom.llm.schema import BoardroomResult
+from boardroom.llm.usage import RunUsage
 from boardroom.runner import run_debate
 
 app = typer.Typer(add_completion=False, help="A panel of AI investors that debate a stock.")
@@ -41,14 +44,22 @@ def debate(
     mock: bool = typer.Option(False, "--mock", help="Force the offline engine (no API key)."),
     csv: str = typer.Option(None, "--csv", help="Load OHLCV from a CSV instead of the network."),
     as_json: bool = typer.Option(False, "--json", help="Print the raw JSON result and exit."),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Log each model call (model, tokens, cost, retries)."
+    ),
 ) -> None:
     """Run the boardroom debate for TICKER."""
 
+    if verbose:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+
+    started = time.perf_counter()
     try:
-        result, used_mock = run_debate(ticker, mock=mock, csv=csv, rounds=rounds)
+        result, used_mock, usage = run_debate(ticker, mock=mock, csv=csv, rounds=rounds)
     except Exception as exc:  # noqa: BLE001 - surface a clean message, not a traceback
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(code=1) from None
+    elapsed = time.perf_counter() - started
 
     if as_json:
         sys.stdout.write(result.to_json() + "\n")
@@ -60,6 +71,21 @@ def debate(
             "Set ANTHROPIC_API_KEY for live model reasoning.[/dim]\n"
         )
     _render(result)
+    console.print(_usage_footer(usage, used_mock, elapsed))
+
+
+def _usage_footer(usage: RunUsage, used_mock: bool, elapsed: float) -> Text:
+    """One dim line summarising the cost and reliability of the run."""
+
+    parts = [f"{usage.num_calls} model calls", f"{elapsed:.1f}s wall"]
+    if used_mock:
+        parts.append("offline engine, no cost")
+    else:
+        parts.append(f"{usage.total_tokens:,} tokens")
+        parts.append(f"${usage.cost_usd:.4f}")
+        if usage.retries:
+            parts.append(f"{usage.retries} retries")
+    return Text("  •  ".join(parts), style="dim")
 
 
 def _render(result: BoardroomResult) -> None:

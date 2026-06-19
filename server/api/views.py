@@ -25,7 +25,7 @@ def debate(request, ticker: str):
     csv = request.GET.get("csv") or None
 
     try:
-        result, used_offline = run_debate(ticker, rounds=rounds, csv=csv)
+        result, used_offline, usage = run_debate(ticker, rounds=rounds, csv=csv)
     except ValueError as exc:
         # Bad ticker or no data: a client error, not a server fault.
         return JsonResponse({"error": str(exc)}, status=400)
@@ -34,6 +34,7 @@ def debate(request, ticker: str):
 
     payload = result.model_dump()
     payload["offline"] = used_offline
+    payload["usage"] = usage.as_dict()
     return JsonResponse(payload)
 
 

@@ -14,6 +14,7 @@ from boardroom.engine import BoardRoom
 from boardroom.llm.client import ClaudeClient, LLMClient, MockLLMClient
 from boardroom.llm.offline import offline_responder
 from boardroom.llm.schema import BoardroomResult
+from boardroom.llm.usage import RunUsage
 
 
 def build_client(settings: Settings, mock: bool) -> tuple[LLMClient, bool]:
@@ -61,11 +62,16 @@ def run_debate(
     rounds: int | None = None,
     settings: Settings | None = None,
     as_of: str | None = None,
-) -> tuple[BoardroomResult, bool]:
-    """Run one debate and return the result plus whether the offline mock was used."""
+) -> tuple[BoardroomResult, bool, RunUsage]:
+    """Run one debate.
+
+    Returns the result, whether the offline mock was used, and the run's usage
+    (tokens, estimated cost, retries, latency) so callers can surface it.
+    """
 
     room, market, used_mock = _prepare(ticker, mock, csv, rounds, settings)
-    return room.debate_sync(market, as_of=as_of), used_mock
+    result = room.debate_sync(market, as_of=as_of)
+    return result, used_mock, room.client.usage
 
 
 async def run_debate_async(
@@ -76,11 +82,12 @@ async def run_debate_async(
     rounds: int | None = None,
     settings: Settings | None = None,
     as_of: str | None = None,
-) -> tuple[BoardroomResult, bool]:
+) -> tuple[BoardroomResult, bool, RunUsage]:
     """Async variant, for callers that already run inside an event loop (the MCP server)."""
 
     room, market, used_mock = _prepare(ticker, mock, csv, rounds, settings)
-    return await room.debate(market, as_of=as_of), used_mock
+    result = await room.debate(market, as_of=as_of)
+    return result, used_mock, room.client.usage
 
 
 def default_fixture_path() -> Path:
