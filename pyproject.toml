@@ -24,7 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
 web = ["django>=5.0"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11"]
 
 [project.scripts]
 boardroom = "boardroom.cli:app"
@@ -32,7 +32,43 @@ boardroom = "boardroom.cli:app"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+boardroom = ["py.typed"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests", "evals"]
 filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests", "evals", "server"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",   # line length is handled by the formatter
+    "B008",   # function calls in argument defaults (Typer/Field use this idiom)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/boardroom"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+no_implicit_optional = true
+# Pragmatic: the engine is fully typed, but we do not force annotations on every
+# local in the offline heuristics or the third-party-heavy data layer.
+check_untyped_defs = false
