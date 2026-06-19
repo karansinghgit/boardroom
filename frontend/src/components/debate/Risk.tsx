@@ -11,7 +11,7 @@ const SIZE_LABEL: Record<RiskReview['suggested_position_size'], string> = {
 export function Risk({ risk }: { risk: RiskReview }) {
   return (
     <section>
-      <SectionLabel>Risk Review</SectionLabel>
+      <SectionLabel>Risk Team</SectionLabel>
       <Card className="p-7 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <p className="max-w-xl text-[15px] leading-relaxed text-ink-soft">{risk.summary}</p>
@@ -34,6 +34,24 @@ export function Risk({ risk }: { risk: RiskReview }) {
               >
                 {r}
               </span>
+            ))}
+          </div>
+        )}
+
+        {risk.perspectives.length > 0 && (
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {risk.perspectives.map((p) => (
+              <div key={p.stance} className="rounded-xl border border-line bg-paper p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+                    {p.stance}
+                  </span>
+                  <span className="text-xs text-ink-soft">
+                    {SIZE_LABEL[p.suggested_position_size]}
+                  </span>
+                </div>
+                <p className="mt-2 text-[13px] leading-snug text-ink-soft">{p.argument}</p>
+              </div>
             ))}
           </div>
         )}

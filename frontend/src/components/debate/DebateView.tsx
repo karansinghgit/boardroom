@@ -1,6 +1,7 @@
 import { Brief } from './Brief'
 import { InvestorCard } from './InvestorCard'
 import { Risk } from './Risk'
+import { TraderCard } from './TraderCard'
 import { VerdictHero } from './VerdictHero'
 import { SectionLabel } from '../ui/primitives'
 import type { BoardroomResult } from '../../types'
@@ -18,6 +19,7 @@ export function DebateView({ result }: { result: BoardroomResult }) {
           ))}
         </div>
       </section>
+      <TraderCard trader={result.trader} />
       <Risk risk={result.risk} />
     </div>
   )

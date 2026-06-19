@@ -3,6 +3,7 @@
 export type Stance = 'bullish' | 'neutral' | 'bearish'
 export type Verdict = 'BUY' | 'HOLD' | 'SELL'
 export type PositionSize = 'none' | 'small' | 'medium' | 'full'
+export type RiskLean = 'aggressive' | 'neutral' | 'conservative'
 
 export interface FundamentalRead {
   stance: Stance
@@ -37,7 +38,21 @@ export interface InvestorVerdict {
   rebuttal: string | null
 }
 
+export interface TraderPlan {
+  action: Verdict
+  conviction: number
+  thesis: string
+  time_horizon: string
+}
+
+export interface RiskPerspective {
+  stance: RiskLean
+  suggested_position_size: PositionSize
+  argument: string
+}
+
 export interface RiskReview {
+  perspectives: RiskPerspective[]
   key_risks: string[]
   suggested_position_size: PositionSize
   confidence_adjustment: string
@@ -58,6 +73,7 @@ export interface BoardroomResult {
   as_of: string | null
   brief: ResearchBrief
   debate: InvestorVerdict[]
+  trader: TraderPlan
   risk: RiskReview
   verdict: FinalVerdict
   offline?: boolean

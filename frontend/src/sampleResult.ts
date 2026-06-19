@@ -89,7 +89,31 @@ export const sampleResult: BoardroomResult = {
       rebuttal: 'Both the bull and bear cases overstate their edge at this price.',
     },
   ],
+  trader: {
+    action: 'HOLD',
+    conviction: 0.5,
+    thesis:
+      'The bull and bear cases roughly offset. I would wait for either a cheaper entry or a cleaner trend before committing capital.',
+    time_horizon: 'watch and revisit',
+  },
   risk: {
+    perspectives: [
+      {
+        stance: 'aggressive',
+        suggested_position_size: 'medium',
+        argument: 'If the trend confirms, the asymmetry justifies sizing up.',
+      },
+      {
+        stance: 'neutral',
+        suggested_position_size: 'small',
+        argument: 'A measured starter position respects the split in views.',
+      },
+      {
+        stance: 'conservative',
+        suggested_position_size: 'none',
+        argument: 'With no edge and elevated volatility, patience costs nothing.',
+      },
+    ],
     key_risks: ['Single-name concentration risk.', 'Annualised volatility around 22.8%.'],
     suggested_position_size: 'small',
     confidence_adjustment: 'Trim conviction where the investors disagree.',
