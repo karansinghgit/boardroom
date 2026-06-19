@@ -131,6 +131,29 @@ structured result. Example client configuration:
 }
 ```
 
+## Web app
+
+BoardRoom has a web front end: a Vite + React + TypeScript single page in
+`frontend/`, served by a small Django API in `server/` that wraps the same
+engine the CLI uses. The page renders the verdict, the research brief, each
+investor's argument, and the risk review in a light, editorial style.
+
+Run the two together (two terminals):
+
+```bash
+# 1. API (no key needed; uses the offline engine, same as the CLI)
+pip install -e ".[web]"
+python server/manage.py runserver 8000
+
+# 2. Front end
+cd frontend && pnpm install && pnpm dev    # http://localhost:5173
+```
+
+The Vite dev server proxies `/api` to Django, so the browser makes same-origin
+requests and no CORS setup is needed. The API exposes
+`GET /api/debate/<ticker>?rounds=<n>` and returns the same structured result as
+the CLI.
+
 ## Evals
 
 The behavior of the panel is checked by an offline eval suite. Each scenario is
@@ -177,7 +200,7 @@ tests/               unit and integration tests
 
 ## Roadmap
 
-* A web view to visualize the debate as it unfolds.
+* Streaming the debate to the web view as each agent responds.
 * Additional personas and an optional news and sentiment analyst.
 * Backtesting verdicts against subsequent returns.
 
