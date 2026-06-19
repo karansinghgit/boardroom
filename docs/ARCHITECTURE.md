@@ -13,8 +13,9 @@ src/boardroom/        the engine (installable package)
   data/               market data + the deterministic indicator engine
   llm/                schemas, the client interface, and the offline engine
   agents/             the firm (task-agents) and the investor personas
-  engine.py           orchestration: research -> debate -> risk -> verdict
+  engine.py           orchestration: research -> debate -> trader -> risk -> verdict
   runner.py           assemble a client + data source and run one debate
+  backtest.py         replay verdicts against forward returns
   cli.py              Rich terminal adapter
   mcp_server.py       MCP tool adapter
 tests/                unit + integration tests (offline)
@@ -31,7 +32,9 @@ frontend/             Vite + React + TypeScript single page
    - **Research** (parallel): Fundamentals + Quant analysts produce a `ResearchBrief`.
    - **Debate**: the five investors give opening stances in parallel, then one or
      more rebuttal rounds where each sees the others.
-   - **Risk**: the Risk Manager reviews the debate.
+   - **Trader**: composes the debate into a concrete `TraderPlan` proposal.
+   - **Risk**: three risk voices (aggressive, neutral, conservative) stress-test
+     the proposal in parallel, and the Risk Manager synthesises a `RiskReview`.
    - **Decision**: the Portfolio Manager issues the `FinalVerdict`.
 3. The result is returned as a single Pydantic model, serialised to JSON for the
    CLI, the MCP tool, and the web API alike.

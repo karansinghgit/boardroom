@@ -45,7 +45,9 @@ BoardRoom has two layers.
 
 * **Fundamentals Analyst** reads valuation multiples and business quality.
 * **Quant Analyst** narrates the output of the technical engine.
-* **Risk Manager** reviews the debate, flags risks, and recommends a size.
+* **Trader** composes the debate into a concrete proposal (direction, conviction, horizon).
+* **Risk team** stress-tests the proposal from three stances (aggressive, neutral, conservative).
+* **Risk Manager** synthesizes those stances into key risks and a position size.
 * **Portfolio Manager** weighs everything and issues the final verdict.
 
 **The investors** are recognizable personas who debate the firm's research
@@ -56,8 +58,9 @@ They give opening statements, then rebut each other for a configurable number of
 rounds.
 
 The pipeline runs as: compute signals, research phase (analysts in parallel),
-debate phase (investors in parallel, then rebuttals), risk review, and final
-decision. The whole run returns one structured object that serializes to JSON.
+debate phase (investors in parallel, then rebuttals), a Trader proposal, a
+three-stance risk review, and the final decision. The whole run returns one
+structured object that serializes to JSON.
 
 ### The technical engine
 
@@ -157,6 +160,20 @@ repair behavior is covered by `tests/test_client.py`, which drives the client
 against an injected fake transport, so the failure paths run in CI without a key
 or network.
 
+## Backtest
+
+Replay the panel across a ticker's history and score each verdict against the
+forward return:
+
+```bash
+boardroom backtest AAPL --horizon 21 --step 21
+```
+
+It runs offline by default, so it needs no key. A verdict counts as a hit when
+the forward move matched the call (BUY before a rise, SELL before a fall, HOLD
+inside a flat band). This measures decision quality on historical data; it is
+not a trading simulation and is not indicative of live performance.
+
 ## Web app
 
 BoardRoom has a web front end: a Vite + React + TypeScript single page in
@@ -222,6 +239,7 @@ src/boardroom/       the engine (installable package)
     investors.py     investor personas
   engine.py          orchestration
   runner.py          assemble a client and run a debate
+  backtest.py        replay verdicts against forward returns
   cli.py             terminal interface
   mcp_server.py      MCP tool
 tests/               unit and integration tests (offline)
