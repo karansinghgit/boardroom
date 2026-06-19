@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { money, pct, verdictStyle } from '../lib/ui'
-import type { BoardroomResult } from '../types'
-import { Card } from './primitives'
+import { money, pct, verdictStyle } from '../../lib/ui'
+import type { BoardroomResult } from '../../types'
+import { Card } from '../ui/primitives'
 
 export function VerdictHero({ result }: { result: BoardroomResult }) {
   const v = result.verdict

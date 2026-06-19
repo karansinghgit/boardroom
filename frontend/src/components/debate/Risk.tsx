@@ -1,5 +1,5 @@
-import type { RiskReview } from '../types'
-import { Card, SectionLabel } from './primitives'
+import type { RiskReview } from '../../types'
+import { Card, SectionLabel } from '../ui/primitives'
 
 const SIZE_LABEL: Record<RiskReview['suggested_position_size'], string> = {
   none: 'No position',

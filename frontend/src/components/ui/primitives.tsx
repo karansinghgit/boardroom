@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { stanceStyle } from '../lib/ui'
-import type { Stance } from '../types'
+import { stanceStyle } from '../../lib/ui'
+import type { Stance } from '../../types'
 
 export function StanceTag({ stance }: { stance: Stance }) {
   const s = stanceStyle(stance)

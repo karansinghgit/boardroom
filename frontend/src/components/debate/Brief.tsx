@@ -1,6 +1,6 @@
-import { FEATURED_INDICATORS, formatIndicator } from '../lib/ui'
-import type { ResearchBrief } from '../types'
-import { Card, SectionLabel, StanceTag } from './primitives'
+import { FEATURED_INDICATORS, formatIndicator } from '../../lib/ui'
+import type { ResearchBrief } from '../../types'
+import { Card, SectionLabel, StanceTag } from '../ui/primitives'
 
 function AnalystColumn({
   title,

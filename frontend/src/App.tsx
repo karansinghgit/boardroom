@@ -1,33 +1,11 @@
-import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ApiError, fetchDebate } from './api'
-import { sampleResult } from './sampleResult'
-import type { BoardroomResult } from './types'
+import { useDebate } from './hooks/useDebate'
 import { SearchBar } from './components/SearchBar'
-import { DebateView } from './components/DebateView'
 import { Loading } from './components/Loading'
-
-type Status = 'idle' | 'loading' | 'error'
+import { DebateView } from './components/debate/DebateView'
 
 export default function App() {
-  const [result, setResult] = useState<BoardroomResult>(sampleResult)
-  const [isSample, setIsSample] = useState(true)
-  const [status, setStatus] = useState<Status>('idle')
-  const [error, setError] = useState<string | null>(null)
-
-  async function run(ticker: string, rounds: number) {
-    setStatus('loading')
-    setError(null)
-    try {
-      const data = await fetchDebate(ticker, rounds)
-      setResult(data)
-      setIsSample(false)
-      setStatus('idle')
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong.')
-      setStatus('idle')
-    }
-  }
+  const { result, isSample, status, error, run } = useDebate()
 
   return (
     <div className="relative z-10 mx-auto max-w-4xl px-5 pb-28 pt-14 sm:px-8">

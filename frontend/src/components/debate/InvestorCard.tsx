@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { initials, pct, stanceStyle } from '../lib/ui'
-import type { InvestorVerdict } from '../types'
-import { Card, StanceTag } from './primitives'
+import { initials, pct, stanceStyle } from '../../lib/ui'
+import type { InvestorVerdict } from '../../types'
+import { Card, StanceTag } from '../ui/primitives'
 
 export function InvestorCard({ verdict, index }: { verdict: InvestorVerdict; index: number }) {
   const s = stanceStyle(verdict.stance)
