@@ -98,7 +98,11 @@ boardroom debate AAPL --rounds 2     # more rebuttal rounds
 boardroom debate AAPL --json         # raw structured result for piping
 boardroom debate AAPL --mock         # force the offline engine
 boardroom debate AAPL --csv data.csv # use a local OHLCV file instead of the network
+boardroom debate AAPL --verbose      # log each model call: tokens, cost, retries
 ```
+
+Every run prints a footer with its cost: the number of model calls, total
+tokens, estimated dollars, and how many transient retries the network forced.
 
 For live model reasoning, copy `.env.example` to `.env` and set your API key
 (or export it in your shell):
@@ -131,6 +135,28 @@ structured result. Example client configuration:
 }
 ```
 
+## Reliability and cost
+
+Live model calls are the part of a deployed system most likely to fail, so the
+client in `src/boardroom/llm/client.py` treats them that way. It owns its own
+retry loop rather than delegating to the SDK, so the behavior is explicit and
+tested:
+
+* **Transient retries** with exponential backoff and jitter on rate limits,
+  timeouts, connection errors, and 5xx responses.
+* **Schema-repair retries**: if the model returns output that fails Pydantic
+  validation, it is re-prompted with the validation error instead of raising, so
+  one bad generation does not sink the whole debate.
+* **Cost and reliability accounting**: every call records its tokens, estimated
+  cost, retry count, and latency. The CLI footer and the API response both
+  surface the totals, and `--verbose` logs one structured JSON line per call.
+
+`pricing.py` holds the per-model rates (USD per million tokens); they are data,
+dated and easy to verify, not magic numbers in the call path. The retry and
+repair behavior is covered by `tests/test_client.py`, which drives the client
+against an injected fake transport, so the failure paths run in CI without a key
+or network.
+
 ## Web app
 
 BoardRoom has a web front end: a Vite + React + TypeScript single page in
@@ -152,7 +178,8 @@ cd frontend && pnpm install && pnpm dev    # http://localhost:5173
 The Vite dev server proxies `/api` to Django, so the browser makes same-origin
 requests and no CORS setup is needed. The API exposes
 `GET /api/debate/<ticker>?rounds=<n>` and returns the same structured result as
-the CLI.
+the CLI, plus a `usage` object (calls, tokens, estimated cost, retries) and an
+`offline` flag.
 
 ## Evals
 
@@ -186,8 +213,10 @@ src/boardroom/       the engine (installable package)
     indicators.py    deterministic technical engine
   llm/
     schema.py        structured outputs (the JSON contract)
-    client.py        provider abstraction (live and offline)
+    client.py        provider abstraction: retries, schema repair, accounting
     offline.py       offline reasoning engine
+    pricing.py       per-model token rates for cost estimates
+    usage.py         per-run token, cost, and latency accounting
   agents/
     firm.py          functional task-agents
     investors.py     investor personas
@@ -212,7 +241,9 @@ make format      # ruff format and autofix
 ```
 
 Continuous integration (`.github/workflows/ci.yml`) runs the same lint, type,
-test, and frontend-build checks on every push and pull request.
+and test checks on every push and pull request, across Python 3.10 / 3.11 /
+3.12, and adds the eval report, a CLI smoke test against the frozen fixture, and
+a front-end build.
 
 ## Roadmap
 

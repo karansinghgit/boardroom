@@ -5,15 +5,23 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   python:
-    name: Python (lint, types, tests)
+    name: Python (lint, types, tests, evals)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install
         run: pip install -e ".[mcp,web,dev]"
@@ -25,6 +33,12 @@ jobs:
         run: mypy
       - name: Test
         run: pytest
+      - name: Evals
+        run: python -m evals.report
+      - name: CLI smoke test
+        # Offline engine (no key in CI): deterministic, exercises the full
+        # pipeline end to end against the frozen fixture.
+        run: boardroom debate AAPL --csv evals/fixtures/sample_ohlcv.csv
 
   frontend:
     name: Frontend (build)
