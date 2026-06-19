@@ -230,7 +230,9 @@ def momentum_signal(df: pd.DataFrame) -> StrategySignal:
     signal = _clip(np.tanh(weighted * 10.0))
     detail = dict(rets)
     detail["vol_ratio"] = vol_ratio
-    return StrategySignal("momentum", signal=signal * confidence, confidence=confidence, detail=detail)
+    return StrategySignal(
+        "momentum", signal=signal * confidence, confidence=confidence, detail=detail
+    )
 
 
 def mean_reversion_signal(df: pd.DataFrame) -> StrategySignal:
@@ -243,10 +245,7 @@ def mean_reversion_signal(df: pd.DataFrame) -> StrategySignal:
     # Mean reversion fades extremes: high price -> bearish, low price -> bullish.
     z_component = _clip(-z / 2.0)
     bb_component = _clip((0.5 - pct_b) * 2.0) if pct_b == pct_b else 0.0
-    if rsi14 == rsi14:
-        rsi_component = _clip((50.0 - rsi14) / 30.0)
-    else:
-        rsi_component = 0.0
+    rsi_component = _clip((50.0 - rsi14) / 30.0) if rsi14 == rsi14 else 0.0
     signal = _clip((z_component + bb_component + rsi_component) / 3.0)
     confidence = _clip(abs(z) / 2.0, 0.0, 1.0) if z == z else 0.0
     return StrategySignal(

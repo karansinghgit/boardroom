@@ -11,11 +11,11 @@ import numpy as np
 import pandas as pd
 
 from boardroom.agents.investors import INVESTORS
-from boardroom.boardroom import BoardRoom
 from boardroom.config import get_settings
 from boardroom.data.market import MarketData
+from boardroom.engine import BoardRoom
 from boardroom.llm.client import MockLLMClient
-from boardroom.llm.mock import offline_responder
+from boardroom.llm.offline import offline_responder
 from boardroom.llm.schema import BoardroomResult
 
 
@@ -58,7 +58,9 @@ def test_full_pipeline_shape():
 
 
 def test_result_is_json_serialisable():
-    market = _market(100.0 * (1.003 ** np.arange(250)), {"trailing_pe": 18.0, "profit_margin": 0.18})
+    market = _market(
+        100.0 * (1.003 ** np.arange(250)), {"trailing_pe": 18.0, "profit_margin": 0.18}
+    )
     result = _run(market)
     payload = result.to_json()
     assert '"verdict"' in payload
@@ -76,7 +78,9 @@ def test_strong_uptrend_leans_buy():
 
 def test_debate_produces_disagreement():
     # Burry's bearish bias should create dissent that the PM records.
-    market = _market(100.0 * (1.001 ** np.arange(260)), {"trailing_pe": 40.0, "profit_margin": 0.05})
+    market = _market(
+        100.0 * (1.001 ** np.arange(260)), {"trailing_pe": 40.0, "profit_margin": 0.05}
+    )
     result = _run(market)
     stances = {v.stance for v in result.debate}
     assert len(stances) >= 1

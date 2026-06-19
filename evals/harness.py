@@ -21,11 +21,11 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from boardroom.boardroom import BoardRoom
 from boardroom.config import get_settings
 from boardroom.data.market import MarketData
+from boardroom.engine import BoardRoom
 from boardroom.llm.client import MockLLMClient
-from boardroom.llm.mock import offline_responder
+from boardroom.llm.offline import offline_responder
 from boardroom.llm.schema import BoardroomResult
 
 _NUMBER = re.compile(r"-?\d+\.?\d*")
@@ -52,7 +52,9 @@ def make_market(ticker: str, close: np.ndarray, fundamentals: dict | None = None
         index=index,
     )
     frame.index.name = "date"
-    return MarketData(ticker=ticker, ohlcv=frame, fundamentals=fundamentals or {}, company_name=ticker)
+    return MarketData(
+        ticker=ticker, ohlcv=frame, fundamentals=fundamentals or {}, company_name=ticker
+    )
 
 
 def default_scenarios() -> list[Scenario]:

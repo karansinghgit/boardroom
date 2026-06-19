@@ -16,7 +16,8 @@ dropped in without touching the agents.
 from __future__ import annotations
 
 import abc
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from pydantic import BaseModel
 
@@ -31,8 +32,7 @@ class LLMClient(abc.ABC):
     """Returns a validated instance of ``schema`` for a system+user prompt."""
 
     @abc.abstractmethod
-    async def structured(self, *, system: str, prompt: str, schema: type[T], model: str) -> T:
-        ...
+    async def structured(self, *, system: str, prompt: str, schema: type[T], model: str) -> T: ...
 
 
 class ClaudeClient(LLMClient):
@@ -55,7 +55,7 @@ class ClaudeClient(LLMClient):
             "description": f"Return the response as a {schema.__name__}.",
             "input_schema": schema.model_json_schema(),
         }
-        message = await self._client.messages.create(
+        message = await self._client.messages.create(  # type: ignore[call-overload]
             model=model,
             max_tokens=self._max_tokens,
             system=system,

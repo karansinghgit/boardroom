@@ -10,7 +10,6 @@ command works on a fresh clone without any setup.
 
 from __future__ import annotations
 
-import json
 import sys
 
 import typer
@@ -30,6 +29,7 @@ console = Console()
 def _main() -> None:
     """A panel of AI investors that debate a stock and reach a verdict."""
 
+
 _STANCE_COLOR = {"bullish": "green", "bearish": "red", "neutral": "yellow"}
 _VERDICT_COLOR = {"BUY": "bold green", "SELL": "bold red", "HOLD": "bold yellow"}
 
@@ -48,7 +48,7 @@ def debate(
         result, used_mock = run_debate(ticker, mock=mock, csv=csv, rounds=rounds)
     except Exception as exc:  # noqa: BLE001 - surface a clean message, not a traceback
         console.print(f"[red]Error:[/red] {exc}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     if as_json:
         sys.stdout.write(result.to_json() + "\n")
@@ -100,7 +100,9 @@ def _brief_table(result: BoardroomResult) -> Table:
 
     ind = brief.indicator_snapshot
     notable = ", ".join(
-        f"{k}={v}" for k, v in ind.items() if v is not None and k in {"rsi14", "adx14", "hurst", "zscore50"}
+        f"{k}={v}"
+        for k, v in ind.items()
+        if v is not None and k in {"rsi14", "adx14", "hurst", "zscore50"}
     )
     if notable:
         table.add_row("Indicators", "", notable)

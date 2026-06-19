@@ -77,9 +77,7 @@ class BoardRoom:
             "ticker": market.ticker,
             "technicals": {"score": round(signals.score, 4), "label": signals.label},
             "indicators": _clean_floats(signals.indicators),
-            "strategies": {
-                name: round(sig.signal, 4) for name, sig in signals.strategies.items()
-            },
+            "strategies": {name: round(sig.signal, 4) for name, sig in signals.strategies.items()},
         }
 
         fundamentals, technical = await asyncio.gather(
@@ -109,7 +107,7 @@ class BoardRoom:
         )
 
     def _investor_ctx(self, brief: ResearchBrief, others: list[InvestorVerdict] | None) -> dict:
-        ctx = {
+        ctx: dict[str, object] = {
             "ticker": brief.ticker,
             "company_name": brief.company_name,
             "technicals": {"score": brief.technicals.score, "label": brief.technicals.stance},
@@ -131,7 +129,9 @@ class BoardRoom:
                 if rebuttal
                 else "Give your opening stance on this stock."
             )
-            verdict = await self._ask(agent, instruction, self._investor_ctx(brief, others), InvestorVerdict)
+            verdict = await self._ask(
+                agent, instruction, self._investor_ctx(brief, others), InvestorVerdict
+            )
             # Keep the persona name authoritative regardless of model output.
             verdict.investor = agent.name
             return verdict
@@ -145,7 +145,10 @@ class BoardRoom:
             ]
             verdicts = list(
                 await asyncio.gather(
-                    *(one(a, others, True) for a, others in zip(investors.INVESTORS, others_by_agent))
+                    *(
+                        one(a, others, True)
+                        for a, others in zip(investors.INVESTORS, others_by_agent, strict=True)
+                    )
                 )
             )
         return verdicts
@@ -156,9 +159,14 @@ class BoardRoom:
             "technicals": {"score": brief.technicals.score},
             "fundamentals_stance": brief.fundamentals.stance,
             "indicators": brief.indicator_snapshot,
-            "debate": [{"investor": v.investor, "stance": v.stance, "conviction": v.conviction} for v in debate],
+            "debate": [
+                {"investor": v.investor, "stance": v.stance, "conviction": v.conviction}
+                for v in debate
+            ],
         }
-        return await self._ask(firm.RISK_MANAGER, "Review the debate and assess risk.", ctx, RiskReview)
+        return await self._ask(
+            firm.RISK_MANAGER, "Review the debate and assess risk.", ctx, RiskReview
+        )
 
     async def _decide(
         self, brief: ResearchBrief, debate: list[InvestorVerdict], risk: RiskReview
@@ -167,7 +175,10 @@ class BoardRoom:
             "ticker": brief.ticker,
             "technicals": {"score": brief.technicals.score},
             "fundamentals_stance": brief.fundamentals.stance,
-            "debate": [{"investor": v.investor, "stance": v.stance, "conviction": v.conviction} for v in debate],
+            "debate": [
+                {"investor": v.investor, "stance": v.stance, "conviction": v.conviction}
+                for v in debate
+            ],
             "risk": {"size": risk.suggested_position_size, "summary": risk.summary},
             "dissent": _dissent_hint(debate),
         }

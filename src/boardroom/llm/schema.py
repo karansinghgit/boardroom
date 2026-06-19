@@ -33,7 +33,9 @@ class TechnicalRead(BaseModel):
     stance: Stance
     score: float = Field(description="Blended technical score from the engine, -1 to 1.")
     summary: str = Field(description="What the indicators say about trend, momentum, and risk.")
-    notable: list[str] = Field(default_factory=list, description="Specific indicator readings cited.")
+    notable: list[str] = Field(
+        default_factory=list, description="Specific indicator readings cited."
+    )
 
 
 class ResearchBrief(BaseModel):

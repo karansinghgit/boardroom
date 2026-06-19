@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 
-
 # Default models. A fast, cheaper model handles the analyst and investor turns
 # (there are many of them); a stronger model makes the final call.
 DEFAULT_FAST_MODEL = "claude-haiku-4-5-20251001"

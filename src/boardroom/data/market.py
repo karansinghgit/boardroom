@@ -11,7 +11,6 @@ through :func:`load_ohlcv_csv` and fundamentals are supplied directly.
 from __future__ import annotations
 
 import json
-import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -103,9 +102,7 @@ def fetch_market(
     handle = yf.Ticker(ticker)
     history = handle.history(period=period, interval="1d", auto_adjust=True)
     if history is None or history.empty:
-        raise ValueError(
-            f"No price history returned for '{ticker}'. Check the symbol is valid."
-        )
+        raise ValueError(f"No price history returned for '{ticker}'. Check the symbol is valid.")
     ohlcv = _normalise_ohlcv(history)
 
     info: dict[str, object] = {}
@@ -115,7 +112,8 @@ def fetch_market(
         info = {}
 
     fundamentals = _extract_fundamentals(info)
-    company_name = info.get("shortName") or info.get("longName")
+    raw_name = info.get("shortName") or info.get("longName")
+    company_name = str(raw_name) if raw_name else None
 
     if use_cache:
         save_ohlcv_csv(ohlcv, csv_path)

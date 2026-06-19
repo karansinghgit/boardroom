@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from boardroom.boardroom import BoardRoom
 from boardroom.config import Settings, get_settings
 from boardroom.data.market import MarketData, fetch_market, load_ohlcv_csv
+from boardroom.engine import BoardRoom
 from boardroom.llm.client import ClaudeClient, LLMClient, MockLLMClient
-from boardroom.llm.mock import offline_responder
+from boardroom.llm.offline import offline_responder
 from boardroom.llm.schema import BoardroomResult
 
 

@@ -45,7 +45,7 @@ def extract_context(prompt: str) -> dict:
     idx = prompt.rfind(CONTEXT_MARKER)
     if idx == -1:
         return {}
-    blob = prompt[idx + len(CONTEXT_MARKER):].strip()
+    blob = prompt[idx + len(CONTEXT_MARKER) :].strip()
     try:
         return json.loads(blob)
     except json.JSONDecodeError:
@@ -125,7 +125,9 @@ def _fundamental(ctx: dict) -> dict:
     stance = _stance_from_score(score, 0.2)
     summary = (
         "On the numbers the business looks "
-        + {"bullish": "attractive", "bearish": "expensive or strained", "neutral": "fairly valued"}[stance]
+        + {"bullish": "attractive", "bearish": "expensive or strained", "neutral": "fairly valued"}[
+            stance
+        ]
         + ". "
         + (strengths[0] if strengths else "Fundamentals are mixed.")
     )
@@ -167,9 +169,9 @@ def _technical(ctx: dict) -> dict:
 
 
 def _base_market_score(ctx: dict) -> float:
-    tech = (ctx.get("technicals") or {})
+    tech = ctx.get("technicals") or {}
     score = float(tech.get("score", 0.0) or 0.0)
-    fund = (ctx.get("fundamentals_stance") or "")
+    fund = ctx.get("fundamentals_stance") or ""
     if fund == "bullish":
         score += 0.2
     elif fund == "bearish":
