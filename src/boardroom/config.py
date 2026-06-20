@@ -67,6 +67,21 @@ class Settings:
     # Where cached market data is written.
     cache_dir: str = ".cache"
 
+    # -- model controls (live runs only) ----------------------------------- #
+    # Mark the stable system prompt as cacheable so repeated calls in a debate
+    # reuse it. Caching only bills a discount once the cached prefix exceeds the
+    # model's minimum (4096 tokens for Haiku 4.5 / Opus), so on BoardRoom's
+    # compact prompts it is wired but mostly dormant; the run's usage report
+    # shows the actual cache hits either way.
+    prompt_cache: bool = True
+
+    # Adaptive thinking and effort are applied to the deep-tier (reasoning-heavy)
+    # call only -- the Portfolio Manager weighing the whole debate. The many
+    # cheap fast-tier calls stay thinking-free, both for cost and because Haiku
+    # does not support the effort parameter.
+    deep_thinking: bool = True
+    deep_effort: str = "high"  # low | medium | high | xhigh | max
+
 
 def _env(name: str) -> str | None:
     value = os.environ.get(name)
@@ -80,6 +95,7 @@ def get_settings(**overrides: object) -> Settings:
         fast_model=_env("BOARDROOM_FAST_MODEL") or DEFAULT_FAST_MODEL,
         deep_model=_env("BOARDROOM_DEEP_MODEL") or DEFAULT_DEEP_MODEL,
         anthropic_api_key=_env("ANTHROPIC_API_KEY"),
+        deep_effort=_env("BOARDROOM_DEEP_EFFORT") or "high",
     )
     if overrides:
         # dataclasses.replace would reject unknown keys, which is what we want.
