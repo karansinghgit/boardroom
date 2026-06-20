@@ -68,11 +68,17 @@ class BoardRoom:
 
     async def _ask(self, agent: Agent, instruction: str, context: dict, schema):
         prompt = build_prompt(instruction, context)
+        deep = agent.tier == "deep"
         return await self._client.structured(
             system=agent.system_prompt,
             prompt=prompt,
             schema=schema,
             model=self._model_for(agent),
+            cache=self._settings.prompt_cache,
+            # Adaptive thinking and effort go to the deep-tier reasoning call
+            # only; the fast tier (Haiku) does not support the effort parameter.
+            thinking=deep and self._settings.deep_thinking,
+            effort=self._settings.deep_effort if deep else None,
         )
 
     # -- phases ------------------------------------------------------------- #
