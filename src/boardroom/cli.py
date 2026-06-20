@@ -84,6 +84,8 @@ def _usage_footer(usage: RunUsage, used_mock: bool, elapsed: float) -> Text:
         parts.append("offline engine, no cost")
     else:
         parts.append(f"{usage.total_tokens:,} tokens")
+        if usage.cache_read_tokens:
+            parts.append(f"{usage.cache_read_tokens:,} cached")
         parts.append(f"${usage.cost_usd:.4f}")
         if usage.retries:
             parts.append(f"{usage.retries} retries")

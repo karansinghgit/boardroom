@@ -14,11 +14,18 @@ from dataclasses import dataclass, field
 
 @dataclass
 class CallRecord:
-    """One model call: tokens, estimated cost, retries, and latency."""
+    """One model call: tokens, estimated cost, retries, and latency.
+
+    ``input_tokens`` is the uncached remainder. ``cache_read_tokens`` and
+    ``cache_write_tokens`` are the prompt-cache hits and writes reported by the
+    API, so caching can be measured rather than assumed.
+    """
 
     model: str
     input_tokens: int = 0
     output_tokens: int = 0
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
     cost_usd: float = 0.0
     retries: int = 0
     latency_s: float = 0.0
@@ -46,6 +53,14 @@ class RunUsage:
         return sum(c.output_tokens for c in self.calls)
 
     @property
+    def cache_read_tokens(self) -> int:
+        return sum(c.cache_read_tokens for c in self.calls)
+
+    @property
+    def cache_write_tokens(self) -> int:
+        return sum(c.cache_write_tokens for c in self.calls)
+
+    @property
     def total_tokens(self) -> int:
         return self.input_tokens + self.output_tokens
 
@@ -70,6 +85,8 @@ class RunUsage:
             "input_tokens": self.input_tokens,
             "output_tokens": self.output_tokens,
             "total_tokens": self.total_tokens,
+            "cache_read_tokens": self.cache_read_tokens,
+            "cache_write_tokens": self.cache_write_tokens,
             "cost_usd": round(self.cost_usd, 6),
             "retries": self.retries,
         }

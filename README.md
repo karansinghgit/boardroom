@@ -138,27 +138,44 @@ structured result. Example client configuration:
 }
 ```
 
-## Reliability and cost
+## Model layer
 
-Live model calls are the part of a deployed system most likely to fail, so the
-client in `src/boardroom/llm/client.py` treats them that way. It owns its own
-retry loop rather than delegating to the SDK, so the behavior is explicit and
-tested:
+The client in `src/boardroom/llm/client.py` is written like production code. It
+uses the current (2026) Anthropic surface and owns its own failure handling:
 
+* **Native structured outputs.** Each call uses `messages.parse` with an
+  `output_format` schema, so the API constrains the model to valid JSON. The
+  Pydantic schema is the contract; there is no forced-tool-call workaround.
+* **Adaptive thinking and effort.** The reasoning-heavy deep-tier call (the
+  Portfolio Manager weighing the whole debate) runs with `thinking: adaptive`
+  and an `effort` setting. The many cheap fast-tier calls stay thinking-free,
+  both for cost and because Haiku does not take the effort parameter.
+* **Prompt caching.** The stable system prompt is marked `cache_control` so
+  repeated calls in a debate can reuse it. The point worth being honest about:
+  caching only bills a discount once the cached prefix clears the model's
+  minimum (4096 tokens for Haiku 4.5 / Opus), and BoardRoom's prompts are
+  compact, so today it mostly reads zero. The client therefore *measures* cache
+  reads and writes from the API response rather than asserting a saving; the
+  usage report shows what actually happened. It starts paying off as prompts
+  grow or on a lower-threshold model such as Sonnet 4.6.
 * **Transient retries** with exponential backoff and jitter on rate limits,
   timeouts, connection errors, and 5xx responses.
-* **Schema-repair retries**: if the model returns output that fails Pydantic
-  validation, it is re-prompted with the validation error instead of raising, so
-  one bad generation does not sink the whole debate.
-* **Cost and reliability accounting**: every call records its tokens, estimated
-  cost, retry count, and latency. The CLI footer and the API response both
-  surface the totals, and `--verbose` logs one structured JSON line per call.
+* **Schema-repair retries**: a safety net that re-prompts if the API ever
+  returns no parseable output. With native structured outputs this rarely fires.
+* **Cost, cache, and reliability accounting**: every call records its tokens,
+  cache hits, estimated cost, retry count, and latency. The CLI footer and the
+  API response surface the totals, and `--verbose` logs one structured JSON line
+  per call.
 
-`pricing.py` holds the per-model rates (USD per million tokens); they are data,
-dated and easy to verify, not magic numbers in the call path. The retry and
-repair behavior is covered by `tests/test_client.py`, which drives the client
-against an injected fake transport, so the failure paths run in CI without a key
-or network.
+`pricing.py` holds the per-model rates (USD per million tokens) and the
+prompt-cache read/write multipliers; they are data, dated and easy to verify,
+not magic numbers in the call path. The structured-output, caching, thinking,
+retry, and repair behavior is covered by `tests/test_client.py`, which drives
+the client against an injected fake transport that captures the request shape,
+so the live paths are asserted in CI without a key or network.
+
+These controls are configurable in `src/boardroom/config.py`: `prompt_cache`,
+`deep_thinking`, and `deep_effort` (also `BOARDROOM_DEEP_EFFORT`).
 
 ## Backtest
 
@@ -217,8 +234,10 @@ voice.
 ## Configuration
 
 All tunables live in `src/boardroom/config.py`: model names, rebuttal rounds,
-the strategy weights, and the signal threshold. Environment variables override
-the model names (`BOARDROOM_FAST_MODEL`, `BOARDROOM_DEEP_MODEL`).
+the strategy weights, the signal threshold, and the model controls
+(`prompt_cache`, `deep_thinking`, `deep_effort`). Environment variables override
+the model names (`BOARDROOM_FAST_MODEL`, `BOARDROOM_DEEP_MODEL`) and the deep
+effort level (`BOARDROOM_DEEP_EFFORT`).
 
 ## Project layout
 
